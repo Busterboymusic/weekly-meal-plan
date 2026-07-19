@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dinner Plan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dinner Plan">
+  <meta name="theme-color" content="#E07A3A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <h1>Dinner Plan</h1>
+    <select class="week-select" id="weekSelect">
+      <option value="1">Week 1</option>
+      <option value="2">Week 2</option>
+      <option value="3">Week 3</option>
+    </select>
+  </div>
+  <div class="subtitle">Drag to reorder &middot; Switch to swap &middot; Remove to eat out or replace</div>
+</div>
+
+<div class="main-layout">
+  <!-- Left column -->
+  <div>
+    <div class="section-title"><span class="icon">🍽</span> Dinners</div>
+    <div class="meals-list" id="mealsList"></div>
+
+    <div class="summary-bar" id="summaryBar">
+      <div class="stat">Meals: <span class="stat-value" id="statMeals">7</span></div>
+      <div class="stat">Leftovers: <span class="stat-value" id="statLeftovers">0</span></div>
+      <div class="stat">Eating out: <span class="stat-value" id="statEatout">0</span></div>
+    </div>
+    <div class="protein-bar" id="proteinBar"></div>
+    <button class="generate-btn" id="generateBtn" onclick="generateGroceryList()">
+      Generate Grocery List
+      <span class="btn-sub">Store-by-store list + weekly deals</span>
+    </button>
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-card">
+      <div class="section-title"><span class="icon">🏪</span> Pantry Staples</div>
+      <div class="sidebar-note">Check items you need to add to the list</div>
+      <div id="staplesContainer"></div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="section-title"><span class="icon">🧪</span> Recipe Box</div>
+      <div class="sidebar-note">New recipes to try — appear in replacement dropdown</div>
+      <div class="recipe-box-list" id="recipeBoxList"></div>
+      <div class="add-recipe-row">
+        <input type="text" class="add-recipe-input" id="newRecipeInput" placeholder="Recipe name...">
+        <button class="add-recipe-btn" onclick="addNewRecipe()">Add</button>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="section-title"><span class="icon">📝</span> Additional Items</div>
+      <textarea class="additional-items" id="additionalItems"
+        placeholder="Add items not on the generated list...&#10;e.g. paper towels, dog food"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Grocery List Overlay -->
+<div class="grocery-overlay" id="groceryOverlay">
+  <div class="grocery-modal">
+    <div class="grocery-header">
+      <h2>Grocery List</h2>
+      <button class="grocery-close" onclick="closeGroceryList()">&times;</button>
+    </div>
+    <div class="grocery-body" id="groceryBody"></div>
+    <div class="grocery-actions">
+      <button class="btn-action btn-print" onclick="printGroceryList()">🖨 Print / Save PDF</button>
+      <button class="btn-action btn-text" onclick="sendMenuText()">💬 Send Menu Text</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

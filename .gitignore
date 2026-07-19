@@ -1,0 +1,12 @@
+# Nimbalyst internal
+.nimbalyst/
+nimbalyst-local/
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp
+/tmp/
+*.log
