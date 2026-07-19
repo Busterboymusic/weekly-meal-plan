@@ -323,6 +323,73 @@ body {
   margin-top: 1px;
 }
 
+/* Price Trends button */
+.trends-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: white;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 6px;
+}
+.trends-btn:hover { background: var(--primary-light); }
+
+/* Price Trends view */
+.trends-sample-banner {
+  background: var(--yellow-light);
+  border: 1px solid var(--yellow);
+  color: #8A6D1E;
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.trend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #F0EBE6;
+}
+.trend-row:last-child { border-bottom: none; }
+.trend-main { flex: 1; min-width: 0; }
+.trend-name { font-size: 14px; font-weight: 600; }
+.trend-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 2px 0 4px;
+}
+.trend-low { color: var(--green); font-weight: 600; }
+.trend-cycle { color: var(--blue); }
+.buy-indicator {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+.buy-indicator.buy-now { background: var(--green); color: white; }
+.buy-indicator.buy-good { background: var(--green-light); color: #2E7D46; }
+.buy-indicator.buy-mid { background: #F5F0EB; color: var(--text-muted); }
+.buy-indicator.buy-wait { background: var(--red-light); color: var(--red); }
+.trend-chart { flex-shrink: 0; }
+.sparkline { display: block; }
+
+.gi-deal.gi-best {
+  background: #FFF0E6;
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
 /* Sidebar */
 .sidebar { display: flex; flex-direction: column; gap: 10px; }
 .sidebar-card {

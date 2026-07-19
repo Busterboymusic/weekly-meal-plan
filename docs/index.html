@@ -42,6 +42,9 @@
       Generate Grocery List
       <span class="btn-sub">Store-by-store list + weekly deals</span>
     </button>
+    <button class="trends-btn" id="trendsBtn" onclick="openPriceTrends()">
+      📈 Price Trends — when to stock up
+    </button>
   </div>
 
   <!-- Right sidebar -->
@@ -85,8 +88,20 @@
   </div>
 </div>
 
+<!-- Price Trends Overlay -->
+<div class="grocery-overlay" id="trendsOverlay">
+  <div class="grocery-modal">
+    <div class="grocery-header">
+      <h2>📈 Price Trends</h2>
+      <button class="grocery-close" onclick="closePriceTrends()">&times;</button>
+    </div>
+    <div class="grocery-body" id="trendsBody"></div>
+  </div>
+</div>
+
 <script src="js/data.js"></script>
 <script src="js/deals.js"></script>
+<script src="js/price-history.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

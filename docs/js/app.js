@@ -535,6 +535,19 @@ function renderGroceryOverlay() {
   document.getElementById('groceryOverlay').classList.add('visible');
 }
 
+function isHistoricalLow(itemName, price) {
+  if (typeof PRICE_HISTORY === 'undefined' || price == null || isNaN(price)) return false;
+  // find matching watchlist history (case-insensitive substring)
+  const key = Object.keys(PRICE_HISTORY).find(k =>
+    k.toLowerCase() === itemName.toLowerCase() ||
+    k.toLowerCase().includes(itemName.toLowerCase()) ||
+    itemName.toLowerCase().includes(k.toLowerCase())
+  );
+  if (!key || !PRICE_HISTORY[key].length) return false;
+  const low = Math.min(...PRICE_HISTORY[key].map(h => h.price));
+  return price <= low * 1.02;
+}
+
 function dealForItem(itemName) {
   if (typeof DEALS_DATA === 'undefined' || !DEALS_DATA.onList) return null;
   const lname = itemName.toLowerCase();
@@ -581,6 +594,124 @@ function buildDealsPanel() {
   return panel;
 }
 
+// ---------- Price Trends ----------
+function parsePrice(p) { return typeof p === 'number' ? p : parseFloat(String(p).replace(/[^0-9.]/g, '')); }
+
+function itemStats(history) {
+  const prices = history.map(h => h.price).filter(p => !isNaN(p));
+  if (!prices.length) return null;
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  const latest = history[history.length - 1];
+  // sale cycle: average days between logged sales
+  let avgGap = null;
+  if (history.length > 1) {
+    const dates = history.map(h => new Date(h.date)).sort((a, b) => a - b);
+    let total = 0;
+    for (let i = 1; i < dates.length; i++) total += (dates[i] - dates[i - 1]) / 86400000;
+    avgGap = Math.round(total / (dates.length - 1));
+  }
+  return { low, high, latest, avgGap, count: history.length };
+}
+
+function sparkline(history, low) {
+  const w = 120, h = 30, pad = 3;
+  const pts = history.map(h => h.price);
+  if (pts.length < 2) return `<svg width="${w}" height="${h}"></svg>`;
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const range = max - min || 1;
+  const stepX = (w - pad * 2) / (pts.length - 1);
+  const coords = pts.map((p, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((p - min) / range) * (h - pad * 2);
+    return [x, y];
+  });
+  const path = coords.map((c, i) => (i === 0 ? 'M' : 'L') + c[0].toFixed(1) + ' ' + c[1].toFixed(1)).join(' ');
+  // dots; mark the lowest in green
+  const dots = coords.map((c, i) => {
+    const isLow = pts[i] === low;
+    return `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${isLow ? 3.5 : 2.2}" fill="${isLow ? '#4CAF6A' : '#E07A3A'}"/>`;
+  }).join('');
+  return `<svg width="${w}" height="${h}" class="sparkline"><path d="${path}" fill="none" stroke="#E07A3A" stroke-width="1.5"/>${dots}</svg>`;
+}
+
+function buyIndicator(stats, currentDealPrice) {
+  const low = stats.low;
+  const ref = currentDealPrice != null ? currentDealPrice : stats.latest.price;
+  if (ref <= low * 1.02) return { cls: 'buy-now', text: '🔥 Best price — stock up' };
+  if (ref <= low * 1.12) return { cls: 'buy-good', text: '👍 Good price' };
+  if (ref >= stats.high * 0.95) return { cls: 'buy-wait', text: '✋ High — wait if you can' };
+  return { cls: 'buy-mid', text: '· Middle of range' };
+}
+
+function currentDealPriceFor(item) {
+  if (typeof DEALS_DATA === 'undefined' || !DEALS_DATA.onList) return null;
+  const d = DEALS_DATA.onList.find(x => x.item.toLowerCase() === item.toLowerCase());
+  return d ? parsePrice(d.price) : null;
+}
+
+function openPriceTrends() {
+  const body = document.getElementById('trendsBody');
+  body.innerHTML = '';
+
+  if (typeof PRICE_SAMPLE !== 'undefined' && PRICE_SAMPLE) {
+    const banner = document.createElement('div');
+    banner.className = 'trends-sample-banner';
+    banner.textContent = 'Showing sample data so you can see how this works. Real prices build up each week you run the deals check.';
+    body.appendChild(banner);
+  }
+
+  const tracked = (typeof WATCHLIST !== 'undefined' ? WATCHLIST : [])
+    .filter(item => PRICE_HISTORY[item] && PRICE_HISTORY[item].length);
+
+  if (tracked.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;color:#8A8580;padding:30px 10px;font-size:14px;';
+    empty.innerHTML = 'No price history yet.<br>Ask Claude to "get this week\'s deals" and history will start building here.';
+    body.appendChild(empty);
+    document.getElementById('trendsOverlay').classList.add('visible');
+    return;
+  }
+
+  // sort: items at best price first
+  tracked.sort((a, b) => {
+    const sa = itemStats(PRICE_HISTORY[a]), sb = itemStats(PRICE_HISTORY[b]);
+    const ia = buyIndicator(sa, currentDealPriceFor(a)).cls === 'buy-now' ? 0 : 1;
+    const ib = buyIndicator(sb, currentDealPriceFor(b)).cls === 'buy-now' ? 0 : 1;
+    return ia - ib;
+  });
+
+  tracked.forEach(item => {
+    const history = [...PRICE_HISTORY[item]].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const stats = itemStats(history);
+    const dealPrice = currentDealPriceFor(item);
+    const ind = buyIndicator(stats, dealPrice);
+    const unit = history[0].unit || '';
+
+    const row = document.createElement('div');
+    row.className = 'trend-row';
+    row.innerHTML = `
+      <div class="trend-main">
+        <div class="trend-name">${item}</div>
+        <div class="trend-numbers">
+          <span class="trend-low">Low $${stats.low.toFixed(2)}${unit}</span>
+          <span class="trend-latest">Latest $${stats.latest.price.toFixed(2)} (${stats.latest.store})</span>
+          ${stats.avgGap ? `<span class="trend-cycle">~every ${stats.avgGap}d</span>` : ''}
+        </div>
+        <div class="buy-indicator ${ind.cls}">${ind.text}${dealPrice != null ? ` — on sale now $${dealPrice.toFixed(2)}` : ''}</div>
+      </div>
+      <div class="trend-chart">${sparkline(history, stats.low)}</div>
+    `;
+    body.appendChild(row);
+  });
+
+  document.getElementById('trendsOverlay').classList.add('visible');
+}
+
+function closePriceTrends() {
+  document.getElementById('trendsOverlay').classList.remove('visible');
+}
+
 function buildGroceryItem(item) {
   const itemDiv = document.createElement('div');
   itemDiv.className = 'grocery-item';
@@ -589,8 +720,12 @@ function buildGroceryItem(item) {
   const movedBadge = (item.store !== item.defaultStore)
     ? `<span class="gi-moved" title="Moved from ${item.defaultStore}">moved</span>` : '';
   const deal = dealForItem(item.name);
-  const dealBadge = deal
-    ? `<span class="gi-deal" title="${deal.store}: ${deal.price}${deal.regular ? ' (reg ' + deal.regular + ')' : ''}">💰 ${deal.price}</span>` : '';
+  let dealBadge = '';
+  if (deal) {
+    const isBest = isHistoricalLow(deal.item, parsePrice(deal.price));
+    const bestTitle = isBest ? " — best price we've tracked!" : '';
+    dealBadge = `<span class="gi-deal${isBest ? ' gi-best' : ''}" title="${deal.store}: ${deal.price}${deal.regular ? ' (reg ' + deal.regular + ')' : ''}${bestTitle}">${isBest ? '🔥' : '💰'} ${deal.price}</span>`;
+  }
   itemDiv.innerHTML = `
     <div class="grocery-checkbox" onclick="event.stopPropagation();this.classList.toggle('checked');this.closest('.grocery-item').classList.toggle('checked-off')">
       <span class="gc-check">✓</span>
@@ -787,10 +922,13 @@ function resetPhoneNumbers() {
 
 // Close overlay on escape or backdrop click
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeGroceryList();
+  if (e.key === 'Escape') { closeGroceryList(); closePriceTrends(); }
 });
 document.getElementById('groceryOverlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('groceryOverlay')) closeGroceryList();
+});
+document.getElementById('trendsOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('trendsOverlay')) closePriceTrends();
 });
 
 // Initialize
