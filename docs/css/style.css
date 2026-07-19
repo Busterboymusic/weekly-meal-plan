@@ -559,6 +559,67 @@ body {
   letter-spacing: 0.3px;
 }
 
+/* Deals panel */
+.deals-panel {
+  background: var(--green-light);
+  border: 1.5px solid var(--green);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.deals-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #2E7D46;
+  margin-bottom: 6px;
+}
+.deals-sub {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #4CAF6A;
+  margin: 8px 0 3px;
+}
+.deal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+.deal-item { flex: 1; font-weight: 500; }
+.deal-store {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+.deal-price { font-weight: 600; color: #2E7D46; }
+.deal-save {
+  font-size: 10px;
+  background: var(--green);
+  color: white;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.deal-note { font-size: 10px; color: var(--text-muted); font-style: italic; font-weight: 400; }
+.deal-row.coupon .deal-coupon { flex: 1; font-size: 12px; }
+
+.gi-deal {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2E7D46;
+  background: var(--green-light);
+  border: 1px solid var(--green);
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
 /* Drop zones */
 .drop-zone {
   border: 2px dashed transparent;

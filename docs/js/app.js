@@ -453,6 +453,10 @@ function renderGroceryOverlay() {
   menuHeader.innerHTML = menuHtml;
   body.appendChild(menuHeader);
 
+  // Deals panel (if this week's deals are loaded)
+  const dealsPanel = buildDealsPanel();
+  if (dealsPanel) body.appendChild(dealsPanel);
+
   const dragHint = document.createElement('div');
   dragHint.style.cssText = 'font-size:11px;color:#8A8580;font-style:italic;margin-bottom:10px;';
   dragHint.textContent = '↔ Drag any item to a different store — your choice is remembered for next time.';
@@ -531,6 +535,52 @@ function renderGroceryOverlay() {
   document.getElementById('groceryOverlay').classList.add('visible');
 }
 
+function dealForItem(itemName) {
+  if (typeof DEALS_DATA === 'undefined' || !DEALS_DATA.onList) return null;
+  const lname = itemName.toLowerCase();
+  return DEALS_DATA.onList.find(d =>
+    lname.includes(d.item.toLowerCase()) || d.item.toLowerCase().includes(lname)
+  ) || null;
+}
+
+function buildDealsPanel() {
+  if (typeof DEALS_DATA === 'undefined') return null;
+  const hasAny = (DEALS_DATA.onList && DEALS_DATA.onList.length) ||
+                 (DEALS_DATA.stockUp && DEALS_DATA.stockUp.length) ||
+                 (DEALS_DATA.coupons && DEALS_DATA.coupons.length);
+  if (!hasAny) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'deals-panel';
+  let html = `<div class="deals-title">💰 Deals This Week${DEALS_DATA.weekOf ? ' — ' + DEALS_DATA.weekOf : ''}</div>`;
+
+  if (DEALS_DATA.onList && DEALS_DATA.onList.length) {
+    html += '<div class="deals-sub">On your list</div>';
+    DEALS_DATA.onList.forEach(d => {
+      html += `<div class="deal-row"><span class="deal-item">${d.item}</span>
+        <span class="deal-store">${d.store}</span>
+        <span class="deal-price">${d.price}${d.save ? ' <span class="deal-save">save ' + d.save + '</span>' : ''}</span></div>`;
+    });
+  }
+  if (DEALS_DATA.stockUp && DEALS_DATA.stockUp.length) {
+    html += '<div class="deals-sub">Stock up</div>';
+    DEALS_DATA.stockUp.forEach(d => {
+      html += `<div class="deal-row"><span class="deal-item">${d.item}</span>
+        <span class="deal-store">${d.store}</span>
+        <span class="deal-price">${d.price}${d.note ? ' <span class="deal-note">' + d.note + '</span>' : ''}</span></div>`;
+    });
+  }
+  if (DEALS_DATA.coupons && DEALS_DATA.coupons.length) {
+    html += '<div class="deals-sub">Clip these coupons</div>';
+    DEALS_DATA.coupons.forEach(c => {
+      html += `<div class="deal-row coupon"><span class="deal-store">${c.store}</span>
+        <span class="deal-coupon">${c.detail}</span></div>`;
+    });
+  }
+  panel.innerHTML = html;
+  return panel;
+}
+
 function buildGroceryItem(item) {
   const itemDiv = document.createElement('div');
   itemDiv.className = 'grocery-item';
@@ -538,12 +588,16 @@ function buildGroceryItem(item) {
   itemDiv.dataset.name = item.name;
   const movedBadge = (item.store !== item.defaultStore)
     ? `<span class="gi-moved" title="Moved from ${item.defaultStore}">moved</span>` : '';
+  const deal = dealForItem(item.name);
+  const dealBadge = deal
+    ? `<span class="gi-deal" title="${deal.store}: ${deal.price}${deal.regular ? ' (reg ' + deal.regular + ')' : ''}">💰 ${deal.price}</span>` : '';
   itemDiv.innerHTML = `
     <div class="grocery-checkbox" onclick="event.stopPropagation();this.classList.toggle('checked');this.closest('.grocery-item').classList.toggle('checked-off')">
       <span class="gc-check">✓</span>
     </div>
     <span class="gi-grip">⋮⋮</span>
     <span class="gi-text">${item.name}</span>
+    ${dealBadge}
     ${movedBadge}
     <span class="gi-qty">${item.qty}</span>
   `;
@@ -601,6 +655,19 @@ function buildPrintHTML() {
   });
   html += '</div>';
 
+  // Deals summary
+  if (typeof DEALS_DATA !== 'undefined') {
+    const d = DEALS_DATA;
+    const hasAny = (d.onList && d.onList.length) || (d.stockUp && d.stockUp.length) || (d.coupons && d.coupons.length);
+    if (hasAny) {
+      html += `<div class="p-deals"><div class="p-deals-title">Deals This Week${d.weekOf ? ' — ' + d.weekOf : ''}</div>`;
+      (d.onList || []).forEach(x => { html += `<div class="p-deal">• ${x.item} — ${x.store} ${x.price}${x.save ? ' (save ' + x.save + ')' : ''}</div>`; });
+      (d.stockUp || []).forEach(x => { html += `<div class="p-deal">• STOCK UP: ${x.item} — ${x.store} ${x.price}${x.note ? ' (' + x.note + ')' : ''}</div>`; });
+      (d.coupons || []).forEach(x => { html += `<div class="p-deal">• COUPON: ${x.store} — ${x.detail}</div>`; });
+      html += '</div>';
+    }
+  }
+
   // Stores (skip empty ones for print)
   STORE_ORDER.forEach(store => {
     const items = groceryItems.filter(it => it.store === store);
@@ -654,6 +721,9 @@ function printGroceryList() {
       .p-name { flex: 1; }
       .p-qty { color: #8A8580; font-size: 12px; }
       .p-blank { border-bottom: 1px solid #ccc; height: 30px; margin: 0 2px; }
+      .p-deals { margin-bottom: 16px; padding: 10px; background: #E8F5EC; border-radius: 8px; }
+      .p-deals-title { font-weight: 700; color: #2E7D46; margin-bottom: 4px; }
+      .p-deal { font-size: 12px; padding: 1px 0; }
       @media print { .p-store { break-inside: avoid; } }
     </style></head><body>
     <h1>Grocery List — Week of ${getWeekOfDate()}</h1>
