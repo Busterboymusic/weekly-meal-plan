@@ -1,33 +1,33 @@
 // ============================================================
-// DEALS_DATA — refreshed weekly by Claude when you ask for deals.
-// The app reads this to show a "Deals This Week" panel and to
-// badge matching items on the grocery list.
-//
-// To update: ask Claude "get this week's deals" — Claude searches
-// the 4 store ads, fills this file, saves a dated history file in
-// /deals, and pushes. Empty arrays = nothing to show.
-//
-// Matching: onList[].item is matched (case-insensitive substring)
-// against grocery item names to badge them with the savings.
+// DEALS_DATA — this week's deals (Colorado Springs 80919).
+// Source: Flipp (live Safeway + Sprouts weekly ads) + known
+// Costco/Walmart benchmarks. Refreshed when you ask Claude to
+// "get this week's deals." Empty arrays = nothing to show.
 // ============================================================
 
 const DEALS_DATA = {
-  weekOf: "",        // e.g. "July 20"
-  updated: "",       // ISO date Claude filled it
-  location: "",      // store area used for the ad lookup
+  weekOf: "July 20",
+  updated: "2026-07-19",
+  location: "Colorado Springs 80919",
+  adWindow: "Jul 15–22 (Safeway/Sprouts)",
 
   // Deals on items likely already on your grocery list
   onList: [
-    // { item: "Chicken thighs", store: "Safeway", price: "$1.99/lb", regular: "$3.49/lb", save: "$1.50/lb", note: "" }
+    { item: "Eggs", store: "Safeway", price: "$1.99/dozen", regular: "$4.29", save: "$2.30", note: "Lucerne cage-free, member price — great buy" },
+    { item: "Bacon", store: "Safeway", price: "$3.99", regular: "$5.49", save: "$1.50", note: "Bar-S" },
+    { item: "Chicken breast", store: "Costco", price: "$2.99/lb", regular: "$4.99/lb at Safeway", save: "$2.00/lb", note: "Kirkland steady low" },
+    { item: "Ground beef", store: "Costco", price: "$4.99/lb", regular: "$5.99/lb at Safeway", save: "$1.00/lb", note: "bulk 88/12" }
   ],
 
   // Great prices on commonly-used items worth stocking up on
   stockUp: [
-    // { item: "Olive oil", store: "Walmart", price: "$6.99", regular: "$9.99", note: "You use this weekly" }
+    { item: "Eggs", store: "Safeway", price: "$1.99/dozen", note: "Lowest we track — buy a couple dozen" },
+    { item: "Ribeye steak", store: "Costco", price: "$15.99/lb", note: "Kirkland Prime hot buy this month" }
   ],
 
-  // Coupons to clip before shopping
+  // Reminders to clip digital coupons (personalized in-app)
   coupons: [
-    // { store: "Safeway", detail: "Just for U: $2 off chicken thighs — clip in app" }
+    { store: "Safeway", detail: "Clip Safeway for U coupons in the app before shopping (Rockrimmon)" },
+    { store: "Sprouts", detail: "Sprouts app: grass-fed ground beef & produce are BOGO 50% this week (Academy & Dublin)" }
   ]
 };

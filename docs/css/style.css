@@ -625,6 +625,27 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
+.gi-bestprice {
+  font-size: 9px;
+  font-weight: 700;
+  color: #2E7D46;
+  background: var(--green-light);
+  border: 1px solid var(--green);
+  padding: 1px 5px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.gi-besthint {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 1px 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
 
 /* Deals panel */
 .deals-panel {

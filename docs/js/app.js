@@ -403,23 +403,14 @@ function generateGroceryList() {
 
     slot.ingredients.forEach(ing => {
       if (ing.isStaple) return;
-      const defaultStore = ing.store === 'staple' ? 'Safeway' : (ing.store || 'Safeway');
-      const store = storeOverrides[ing.name] || defaultStore;
-      const cat = ing.category || 'Other';
+      const ingDefault = ing.store === 'staple' ? 'Safeway' : (ing.store || 'Safeway');
       const key = ing.name;
 
       if (byKey[key]) {
         byKey[key].meals.push(slot.name);
         byKey[key].totalServings += servings;
       } else {
-        const item = {
-          name: ing.name,
-          qty: ing[qtyKey] || ing.per3 || '',
-          category: cat,
-          store: store,
-          defaultStore: defaultStore,
-          meals: [slot.name]
-        };
+        const item = makeGroceryItem(ing.name, ing[qtyKey] || ing.per3 || '', ing.category || 'Other', ingDefault, [slot.name]);
         byKey[key] = item;
         groceryItems.push(item);
       }
@@ -429,13 +420,38 @@ function generateGroceryList() {
   // Add checked staples
   checkedStaples.forEach(item => {
     if (byKey[item]) return;
-    const store = storeOverrides[item] || 'Safeway';
-    const it = { name: item, qty: '', category: 'Pantry Staples', store: store, defaultStore: 'Safeway', meals: ['Staple'] };
+    const it = makeGroceryItem(item, '', 'Pantry Staples', 'Safeway', ['Staple']);
     byKey[item] = it;
     groceryItems.push(it);
   });
 
   renderGroceryOverlay();
+}
+
+// Build a grocery item, routing to the best-price store when that's
+// a meaningful win over the recipe's default store. User drag-overrides win.
+function makeGroceryItem(name, qty, category, defaultStore, meals) {
+  const best = bestPriceFor(name);
+  let store = defaultStore;
+  let bestPrice = null;
+  if (best) {
+    bestPrice = best; // { store, price, unit }
+    // auto-route to best store only if no manual override and it differs
+    if (!storeOverrides[name] && best.store !== defaultStore) {
+      store = best.store;
+    }
+  }
+  if (storeOverrides[name]) store = storeOverrides[name];
+  return { name, qty, category, store, defaultStore, bestPrice, meals };
+}
+
+function bestPriceFor(name) {
+  if (typeof BEST_PRICE === 'undefined') return null;
+  const lname = name.toLowerCase();
+  const key = Object.keys(BEST_PRICE).find(k =>
+    lname.includes(k.toLowerCase()) || k.toLowerCase().includes(lname)
+  );
+  return key ? { item: key, ...BEST_PRICE[key] } : null;
 }
 
 function renderGroceryOverlay() {
@@ -717,8 +733,21 @@ function buildGroceryItem(item) {
   itemDiv.className = 'grocery-item';
   itemDiv.draggable = true;
   itemDiv.dataset.name = item.name;
-  const movedBadge = (item.store !== item.defaultStore)
-    ? `<span class="gi-moved" title="Moved from ${item.defaultStore}">moved</span>` : '';
+
+  const isUserMoved = typeof storeOverrides !== 'undefined' && storeOverrides[item.name];
+  const movedBadge = isUserMoved
+    ? `<span class="gi-moved" title="You moved this here">moved</span>` : '';
+
+  // Best-price badge: shown when this item is at its usual best-price store
+  let bestBadge = '';
+  if (item.bestPrice && item.store === item.bestPrice.store) {
+    const priceTxt = item.bestPrice.price ? ` $${item.bestPrice.price.toFixed(2)}${item.bestPrice.unit || ''}` : '';
+    bestBadge = `<span class="gi-bestprice" title="Usually cheapest at ${item.bestPrice.store}">best price${priceTxt}</span>`;
+  } else if (item.bestPrice && item.store !== item.bestPrice.store) {
+    // at a different (convenient) store — hint where it's cheaper
+    bestBadge = `<span class="gi-besthint" title="Cheaper at ${item.bestPrice.store}">↓ ${item.bestPrice.store}</span>`;
+  }
+
   const deal = dealForItem(item.name);
   let dealBadge = '';
   if (deal) {
@@ -733,6 +762,7 @@ function buildGroceryItem(item) {
     <span class="gi-grip">⋮⋮</span>
     <span class="gi-text">${item.name}</span>
     ${dealBadge}
+    ${bestBadge}
     ${movedBadge}
     <span class="gi-qty">${item.qty}</span>
   `;
