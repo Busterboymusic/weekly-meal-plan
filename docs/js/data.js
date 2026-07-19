@@ -1,6 +1,10 @@
 // ============================================================
 // MEALS_DATA — all meals organized by week rotation
-// Generated from recipe ingredient files
+// SOURCE OF TRUTH for all recipe/ingredient data. Edit here to
+// add or change meals; the live app reads this file directly.
+// Ingredient qty fields: per1 / per3 / per5 (5 = leftovers).
+// store: "staple" + isStaple:true means it's a pantry staple
+// (excluded from the auto grocery list unless checked).
 // ============================================================
 
 const MEALS_DATA = {
